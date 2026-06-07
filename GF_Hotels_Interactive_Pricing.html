@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GF Hotels Ã Reeco â Interactive Pricing Proposal</title>
+<title>GF Hotels × Reeco — Interactive Pricing Proposal</title>
 <style>
   :root {
     --navy: #0B1F3A;
@@ -26,7 +26,7 @@
     font-size: 13px;
   }
 
-  /* Sticky stack height tokens â keep these in sync with rendered heights */
+  /* Sticky stack height tokens — keep these in sync with rendered heights */
   :root {
     --h-header: 56px;
     --h-summary: 58px;
@@ -180,7 +180,7 @@
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     border: 1px solid var(--stone-200);
-    /* NOTE: must NOT clip â overflow:hidden here also breaks sticky thead */
+    /* NOTE: must NOT clip — overflow:hidden here also breaks sticky thead */
     overflow: visible;
   }
   /* Default: no scroll container, so thead sticks to the window (not this div) */
@@ -247,7 +247,7 @@
   }
   thead th[data-sort]:hover { background: #ECEAE6; color: var(--navy); }
   thead th[data-sort]::after {
-    content: ' â';
+    content: ' ⇅';
     font-size: 9px;
     opacity: 0.28;
     margin-left: 3px;
@@ -256,12 +256,12 @@
     text-transform: none;
   }
   thead th[data-sort].sort-asc::after {
-    content: ' â';
+    content: ' ↑';
     opacity: 1;
     color: var(--mint-dark);
   }
   thead th[data-sort].sort-desc::after {
-    content: ' â';
+    content: ' ↓';
     opacity: 1;
     color: var(--mint-dark);
   }
@@ -412,7 +412,7 @@
   /* Closed/excluded properties */
   tr.excluded { opacity: 0.4; }
   tr.excluded .prop-name::after {
-    content: " â CLOSED";
+    content: " — CLOSED";
     font-size: 9px;
     font-weight: 700;
     color: var(--red);
@@ -420,7 +420,7 @@
     margin-left: 4px;
   }
   tr.restaurant .prop-name::after {
-    content: " â RESTAURANT ONLY";
+    content: " — RESTAURANT ONLY";
     font-size: 9px;
     font-weight: 700;
     color: var(--stone-600);
@@ -448,10 +448,10 @@
   <div class="page-header-inner">
     <div class="header-brand">
       <div class="reeco-logo">reeco.</div>
-      <div class="header-divider">Ã</div>
+      <div class="header-divider">×</div>
       <div>
-        <div class="header-title">GF Hotels â Interactive Pricing Proposal</div>
-        <div class="header-subtitle">Prepared June 2026 &nbsp;Â·&nbsp; Toggle modules per property &nbsp;Â·&nbsp; Pricing auto-updates below</div>
+        <div class="header-title">GF Hotels — Interactive Pricing Proposal</div>
+        <div class="header-subtitle">Prepared June 2026 &nbsp;·&nbsp; Toggle modules per property &nbsp;·&nbsp; Pricing auto-updates below</div>
       </div>
     </div>
   </div>
@@ -461,28 +461,24 @@
   <div class="summary-bar-inner">
     <div class="summary-stat">
       <div class="summary-stat-label">Properties</div>
-      <div class="summary-stat-value" id="stat-props">â</div>
+      <div class="summary-stat-value" id="stat-props">—</div>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-stat">
       <div class="summary-stat-label">Monthly Total</div>
-      <div class="summary-stat-value mint" id="stat-monthly">â</div>
+      <div class="summary-stat-value mint" id="stat-monthly">—</div>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-stat">
       <div class="summary-stat-label">Annual ARR</div>
-      <div class="summary-stat-value mint" id="stat-arr">â</div>
+      <div class="summary-stat-value mint" id="stat-arr">—</div>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-stat">
       <div class="summary-stat-label">With Culinary</div>
-      <div class="summary-stat-value" id="stat-culinary">â</div>
+      <div class="summary-stat-value" id="stat-culinary">—</div>
     </div>
-    <div class="summary-divider"></div>
-    <div class="summary-stat">
-      <div class="summary-stat-label">Setup Credit</div>
-      <div class="summary-stat-value" id="stat-setup">â</div>
-    </div>
+    
     <div class="summary-note" id="stat-note">Adjust toggles below to model your portfolio</div>
   </div>
 </div>
@@ -506,7 +502,7 @@
       <button class="filter-btn active" onclick="filterType('all', this)">All</button>
       <button class="filter-btn" onclick="filterType('F', this)">Full-Service</button>
       <button class="filter-btn" onclick="filterType('L', this)">Select-Service</button>
-      <input type="text" class="search-input" placeholder="Search propertiesâ¦" oninput="filterSearch(this.value)">
+      <input type="text" class="search-input" placeholder="Search properties…" oninput="filterSearch(this.value)">
     </div>
     <div class="table-scroll">
     <table id="prop-table">
@@ -529,8 +525,8 @@
         <tr>
           <td class="foot-label" colspan="3">Portfolio Total</td>
           <td></td><td></td><td></td><td></td>
-          <td class="foot-total" id="foot-monthly">â</td>
-          <td class="foot-annual" id="foot-annual">â</td>
+          <td class="foot-total" id="foot-monthly">—</td>
+          <td class="foot-annual" id="foot-annual">—</td>
         </tr>
       </tfoot>
     </table>
@@ -540,7 +536,7 @@
 
 <script>
 const POS_OPTIONS = [
-  "â Select POS â",
+  "— Select POS —",
   "Toast",
   "Oracle Micros Simphony",
   "Oracle MICROS 3700",
@@ -759,7 +755,7 @@ function getSortValue(tr, col) {
     }
     case 'pos': {
       const s = tr.querySelector('.pos-select');
-      return s ? s.value.replace('â Select POS â', '').toLowerCase() : '';
+      return s ? s.value.replace('— Select POS —', '').toLowerCase() : '';
     }
     case 'monthly':
     case 'annual': {
@@ -797,8 +793,8 @@ function buildTable() {
     tr.innerHTML = `
       <td class="prop-name">${name}</td>
       <td><span class="type-badge type-${type === 'F' ? 'fs' : (type === 'L' ? 'ls' : 'ls')}">${type === 'R' ? 'R' : type === 'F' ? 'FS' : 'LS'}</span></td>
-      <td class="rooms-val">${rooms > 0 ? rooms.toLocaleString() : 'â'}</td>
-      <td class="base-price" data-base="${basePrice}">${basePrice > 0 ? fmt(basePrice) : 'â'}</td>
+      <td class="rooms-val">${rooms > 0 ? rooms.toLocaleString() : '—'}</td>
+      <td class="base-price" data-base="${basePrice}">${basePrice > 0 ? fmt(basePrice) : '—'}</td>
       <td class="toggle-cell">
         ${!isRestaurant && !closed ? `
         <div class="toggle-wrap">
@@ -807,8 +803,8 @@ function buildTable() {
             <div class="toggle-track"></div>
             <div class="toggle-thumb"></div>
           </label>
-          <span class="toggle-price ${defaultInv ? 'active' : ''}" data-inv-label="${invPrice}">${defaultInv ? fmt(invPrice) : 'â'}</span>
-        </div>` : '<span style="color:var(--stone-200);">â</span>'}
+          <span class="toggle-price ${defaultInv ? 'active' : ''}" data-inv-label="${invPrice}">${defaultInv ? fmt(invPrice) : '—'}</span>
+        </div>` : '<span style="color:var(--stone-200);">—</span>'}
       </td>
       <td class="toggle-cell">
         ${!isRestaurant && !closed ? `
@@ -819,7 +815,7 @@ function buildTable() {
             <div class="toggle-thumb"></div>
           </label>
           <span class="toggle-price ${defaultCul ? 'active' : ''}">$200</span>
-        </div>` : '<span style="color:var(--stone-200);">â</span>'}
+        </div>` : '<span style="color:var(--stone-200);">—</span>'}
       </td>
       <td>
         ${!isRestaurant && !closed ? `
@@ -827,8 +823,8 @@ function buildTable() {
           ${posOptions}
         </select>` : ''}
       </td>
-      <td class="row-total" id="total-${i}">${!isRestaurant && !closed ? fmt(calcRow(type, rooms, defaultInv, defaultCul)) : 'â'}</td>
-      <td class="row-annual" id="ann-${i}">${!isRestaurant && !closed ? fmtAnn(calcRow(type, rooms, defaultInv, defaultCul) * 12) : 'â'}</td>
+      <td class="row-total" id="total-${i}">${!isRestaurant && !closed ? fmt(calcRow(type, rooms, defaultInv, defaultCul)) : '—'}</td>
+      <td class="row-annual" id="ann-${i}">${!isRestaurant && !closed ? fmtAnn(calcRow(type, rooms, defaultInv, defaultCul) * 12) : '—'}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -860,12 +856,12 @@ function onToggle(idx) {
 
   // Update inventory price label
   if (invLabel) {
-    invLabel.textContent = hasInv ? fmt(getInvPrice(type)) : 'â';
+    invLabel.textContent = hasInv ? fmt(getInvPrice(type)) : '—';
     invLabel.classList.toggle('active', hasInv);
   }
   // Update culinary price label
   if (culLabel) {
-    culLabel.textContent = hasCul ? '$200' : 'â';
+    culLabel.textContent = hasCul ? '$200' : '—';
     culLabel.classList.toggle('active', hasCul);
   }
   // Show/hide POS select
