@@ -953,5 +953,23 @@ function applyFilter() {
 
 buildTable();
 </script>
+
+<script>
+(function() {
+  if (window.self !== window.top) {
+    // Running inside an iframe — the outer page scrolls, not us.
+    // Freeze only the column header at top:0; let all other bars scroll naturally.
+    document.documentElement.style.setProperty('--stick-thead', '0px');
+    document.addEventListener('DOMContentLoaded', function() {
+      var header = document.querySelector('.page-header');
+      var summary = document.querySelector('.summary-bar');
+      var legend = document.querySelector('.legend-bar');
+      if (header) header.style.position = 'relative';
+      if (summary) summary.style.position = 'relative';
+      if (legend) legend.style.position = 'relative';
+    });
+  }
+})();
+</script>
 </body>
 </html>
