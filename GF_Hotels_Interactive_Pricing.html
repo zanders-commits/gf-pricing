@@ -240,6 +240,36 @@
     box-shadow: 0 1px 0 var(--stone-200);
   }
   thead th.right { text-align: right; }
+  thead th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.12s, color 0.12s;
+  }
+  thead th[data-sort]:hover { background: #ECEAE6; color: var(--navy); }
+  thead th[data-sort]::after {
+    content: ' ⇅';
+    font-size: 9px;
+    opacity: 0.28;
+    margin-left: 3px;
+    font-style: normal;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  thead th[data-sort].sort-asc::after {
+    content: ' ↑';
+    opacity: 1;
+    color: var(--mint-dark);
+  }
+  thead th[data-sort].sort-desc::after {
+    content: ' ↓';
+    opacity: 1;
+    color: var(--mint-dark);
+  }
+  thead th[data-sort].sort-asc,
+  thead th[data-sort].sort-desc {
+    color: var(--navy);
+    background: #ECEAE6;
+  }
   tbody tr {
     border-bottom: 1px solid var(--stone-200);
     transition: background 0.1s;
@@ -483,15 +513,15 @@
     <table id="prop-table">
       <thead>
         <tr>
-          <th style="min-width:260px;">Property</th>
-          <th>Type</th>
-          <th class="right">Rooms</th>
-          <th class="right">AP + Purchasing</th>
-          <th style="text-align:center; min-width:90px;">Inventory</th>
-          <th style="text-align:center; min-width:90px;">Culinary</th>
-          <th style="min-width:180px;">POS System</th>
-          <th class="right">Monthly</th>
-          <th class="right">Annual</th>
+          <th style="min-width:260px;" data-sort="name" onclick="sortBy('name')">Property</th>
+          <th data-sort="type" onclick="sortBy('type')">Type</th>
+          <th class="right" data-sort="rooms" onclick="sortBy('rooms')">Rooms</th>
+          <th class="right" data-sort="base" onclick="sortBy('base')">AP + Purchasing</th>
+          <th style="text-align:center; min-width:90px;" data-sort="inv" onclick="sortBy('inv')">Inventory</th>
+          <th style="text-align:center; min-width:90px;" data-sort="cul" onclick="sortBy('cul')">Culinary</th>
+          <th style="min-width:180px;" data-sort="pos" onclick="sortBy('pos')">POS System</th>
+          <th class="right" data-sort="monthly" onclick="sortBy('monthly')">Monthly</th>
+          <th class="right" data-sort="annual" onclick="sortBy('annual')">Annual</th>
         </tr>
       </thead>
       <tbody id="prop-tbody">
@@ -691,6 +721,56 @@ function fmtAnn(n) {
 
 let activeFilter = 'all';
 let searchTerm = '';
+let sortCol = null;
+let sortDir = 1; // 1 = asc, -1 = desc
+
+function sortBy(col) {
+  if (sortCol === col) {
+    sortDir *= -1;
+  } else {
+    sortCol = col;
+    sortDir = 1;
+  }
+  // Update header indicators
+  document.querySelectorAll('thead th[data-sort]').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.sort === col) {
+      th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+    }
+  });
+  applyFilter();
+}
+
+function getSortValue(tr, col) {
+  const idx = parseInt(tr.dataset.idx);
+  if (isNaN(idx)) return '';
+  const [name, type, rooms, closed] = PROPERTIES[idx];
+  switch (col) {
+    case 'name':    return name.toLowerCase();
+    case 'type':    return type;
+    case 'rooms':   return rooms;
+    case 'base':    return getBasePrice(type, rooms);
+    case 'inv': {
+      const c = tr.querySelector('.inv-check');
+      return c ? (c.checked ? 1 : 0) : -1;
+    }
+    case 'cul': {
+      const c = tr.querySelector('.cul-check');
+      return c ? (c.checked ? 1 : 0) : -1;
+    }
+    case 'pos': {
+      const s = tr.querySelector('.pos-select');
+      return s ? s.value.replace('— Select POS —', '').toLowerCase() : '';
+    }
+    case 'monthly':
+    case 'annual': {
+      const t = document.getElementById(`total-${idx}`);
+      if (!t) return 0;
+      return parseFloat(t.textContent.replace(/[$,]/g, '')) || 0;
+    }
+    default: return '';
+  }
+}
 
 function buildTable() {
   const tbody = document.getElementById('prop-tbody');
@@ -848,7 +928,11 @@ function filterSearch(val) {
 }
 
 function applyFilter() {
-  document.querySelectorAll('#prop-tbody tr').forEach(tr => {
+  const tbody = document.getElementById('prop-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+
+  // Apply visibility
+  rows.forEach(tr => {
     const type = tr.dataset.type;
     const name = tr.dataset.name || '';
     let show = true;
@@ -856,6 +940,23 @@ function applyFilter() {
     if (searchTerm && !name.includes(searchTerm)) show = false;
     tr.style.display = show ? '' : 'none';
   });
+
+  // Apply sort to visible rows
+  if (sortCol) {
+    const visible = rows.filter(tr => tr.style.display !== 'none');
+    const hidden  = rows.filter(tr => tr.style.display === 'none');
+
+    visible.sort((a, b) => {
+      const av = getSortValue(a, sortCol);
+      const bv = getSortValue(b, sortCol);
+      if (av < bv) return -1 * sortDir;
+      if (av > bv) return  1 * sortDir;
+      return 0;
+    });
+
+    // Re-append in sorted order (hidden rows go to end, out of sight)
+    [...visible, ...hidden].forEach(tr => tbody.appendChild(tr));
+  }
 }
 
 buildTable();
