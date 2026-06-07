@@ -955,7 +955,23 @@ function applyFilter() {
   }
 }
 
-if (window.self !== window.top) { document.documentElement.classList.add('embedded'); }
+if (window.self !== window.top) {
+  document.documentElement.classList.add('embedded');
+  // Measure actual rendered bar heights so thead sticks just below them (handles wrapping)
+  function fixStickyOffsets() {
+    var h = (document.querySelector('.page-header') || {offsetHeight:56}).offsetHeight;
+    var s = (document.querySelector('.summary-bar') || {offsetHeight:58}).offsetHeight;
+    var l = (document.querySelector('.legend-bar') || {offsetHeight:37}).offsetHeight;
+    var total = h + s + l;
+    var root = document.documentElement;
+    root.style.setProperty('--stick-summary', h + 'px');
+    root.style.setProperty('--stick-legend', (h + s) + 'px');
+    root.style.setProperty('--stick-thead', total + 'px');
+  }
+  // Run after paint so heights are accurate
+  requestAnimationFrame(function() { requestAnimationFrame(fixStickyOffsets); });
+  window.addEventListener('resize', fixStickyOffsets);
+}
 buildTable();
 </script>
 
