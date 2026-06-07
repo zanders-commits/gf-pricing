@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GF Hotels × Reeco — Interactive Pricing Proposal</title>
+<style>
+  :root {
+    --navy: #0B1F3A;
+    --navy-800: #162F52;
+    --mint: #00B28A;
+    --mint-light: #E6F7F3;
+    --mint-dark: #008F6E;
+    --stone: #F5F5F3;
+    --stone-200: #E8E8E4;
+    --stone-600: #8A8A84;
+    --white: #ffffff;
+    --red-soft: #FFF0F0;
+    --red: #C0392B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--stone);
+    color: var(--navy);
+    font-size: 13px;
+  }
+
+  /* Sticky stack height tokens — keep these in sync with rendered heights */
+  :root {
+    --h-header: 56px;
+    --h-summary: 58px;
+    --h-legend: 37px;
+    --stick-summary: var(--h-header);                                  /* 56px */
+    --stick-legend: calc(var(--h-header) + var(--h-summary));          /* 114px */
+    --stick-thead: calc(var(--h-header) + var(--h-summary) + var(--h-legend)); /* 151px */
+  }
+
+  /* Header */
+  .page-header {
+    background: var(--navy);
+    color: white;
+    padding: 14px 32px;
+    height: var(--h-header);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.22);
+  }
+  .page-header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .reeco-logo {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--mint);
+  }
+  .header-divider { color: rgba(255,255,255,0.3); font-size: 18px; }
+  .header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+    letter-spacing: -0.01em;
+  }
+  .header-subtitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  /* Summary bar */
+  .summary-bar {
+    background: white;
+    border-bottom: 1px solid var(--stone-200);
+    padding: 9px 32px;
+    height: var(--h-summary);
+    position: sticky;
+    top: var(--stick-summary);
+    z-index: 99;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .summary-bar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .summary-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .summary-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--stone-600);
+    font-weight: 600;
+  }
+  .summary-stat-value {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+  }
+  .summary-stat-value.mint { color: var(--mint-dark); }
+  .summary-divider { width: 1px; height: 36px; background: var(--stone-200); }
+  .summary-note {
+    font-size: 12px;
+    color: var(--stone-600);
+    font-style: italic;
+    margin-left: auto;
+  }
+
+  /* Module legend */
+  .legend-bar {
+    background: var(--mint-light);
+    border-bottom: 1px solid rgba(0,178,138,0.2);
+    padding: 8px 32px;
+    height: var(--h-legend);
+    position: sticky;
+    top: var(--stick-legend);
+    z-index: 98;
+  }
+  .legend-bar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .legend-bar-inner::-webkit-scrollbar { display: none; }
+  .legend-label { font-size: 11px; color: var(--navy-800); font-weight: 700; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--navy);
+  }
+  .legend-price {
+    background: var(--navy);
+    color: white;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    font-feature-settings: "tnum";
+  }
+  .legend-price.mint { background: var(--mint-dark); }
+
+  /* Table wrapper */
+  .table-wrap {
+    max-width: 1400px;
+    margin: 16px auto 40px;
+    padding: 0 24px;
+  }
+  .table-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid var(--stone-200);
+    /* NOTE: must NOT clip — overflow:hidden here also breaks sticky thead */
+    overflow: visible;
+  }
+  /* Default: no scroll container, so thead sticks to the window (not this div) */
+  .table-scroll { overflow: visible; }
+  .table-toolbar {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--stone-200);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .toolbar-label { font-size: 12px; font-weight: 700; color: var(--stone-600); }
+  .filter-btn {
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: 1px solid var(--stone-200);
+    background: var(--stone);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--navy);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { background: var(--mint-light); border-color: var(--mint); }
+  .filter-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+  .search-input {
+    margin-left: auto;
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: 1px solid var(--stone-200);
+    font-size: 12px;
+    width: 200px;
+    outline: none;
+    color: var(--navy);
+  }
+  .search-input:focus { border-color: var(--mint); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    background: var(--stone);
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--stone-600);
+    border-bottom: 1px solid var(--stone-200);
+    white-space: nowrap;
+    position: sticky;
+    top: var(--stick-thead);
+    z-index: 10;
+    box-shadow: 0 1px 0 var(--stone-200);
+  }
+  thead th.right { text-align: right; }
+  tbody tr {
+    border-bottom: 1px solid var(--stone-200);
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: #FAFAFA; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td {
+    padding: 8px 12px;
+    vertical-align: middle;
+  }
+  .prop-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--navy);
+    max-width: 260px;
+  }
+  .type-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .type-fs { background: var(--navy); color: white; }
+  .type-ls { background: var(--stone-200); color: var(--navy); }
+  .rooms-val {
+    font-size: 12px;
+    color: var(--stone-600);
+    font-feature-settings: "tnum";
+    text-align: right;
+  }
+  .base-price {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+    font-feature-settings: "tnum";
+    text-align: right;
+    white-space: nowrap;
+  }
+  .toggle-cell { text-align: center; }
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .toggle {
+    position: relative;
+    width: 34px;
+    height: 18px;
+    cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 9px;
+    background: var(--stone-200);
+    transition: background 0.2s;
+  }
+  .toggle input:checked + .toggle-track { background: var(--mint); }
+  .toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+    pointer-events: none;
+  }
+  .toggle input:checked ~ .toggle-thumb { transform: translateX(16px); }
+  .toggle-price {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--stone-600);
+    min-width: 28px;
+    font-feature-settings: "tnum";
+  }
+  .toggle-price.active { color: var(--mint-dark); }
+
+  .pos-select {
+    font-size: 11px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--stone-200);
+    background: white;
+    color: var(--navy);
+    min-width: 160px;
+    max-width: 190px;
+    outline: none;
+    cursor: pointer;
+  }
+  .pos-select:focus { border-color: var(--mint); }
+  .pos-hidden { display: none; }
+
+  .row-total {
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+    font-feature-settings: "tnum";
+    white-space: nowrap;
+    color: var(--navy);
+  }
+  .row-annual {
+    font-size: 11px;
+    font-weight: 600;
+    text-align: right;
+    font-feature-settings: "tnum";
+    color: var(--stone-600);
+    white-space: nowrap;
+  }
+
+  /* Footer total row */
+  tfoot td {
+    padding: 12px;
+    background: var(--navy);
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    border-top: 2px solid var(--mint);
+  }
+  tfoot td.foot-label { font-size: 12px; letter-spacing: 0.5px; }
+  tfoot td.foot-total {
+    text-align: right;
+    font-size: 16px;
+    font-feature-settings: "tnum";
+    color: var(--mint);
+  }
+  tfoot td.foot-annual {
+    text-align: right;
+    font-size: 13px;
+    font-feature-settings: "tnum";
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* Closed/excluded properties */
+  tr.excluded { opacity: 0.4; }
+  tr.excluded .prop-name::after {
+    content: " — CLOSED";
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+  }
+  tr.restaurant .prop-name::after {
+    content: " — RESTAURANT ONLY";
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--stone-600);
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+  }
+
+  /* Responsive note */
+  @media (max-width: 1180px) {
+    /* Below the table's natural width, allow horizontal scroll.
+       Sticky thead trades off here, which is acceptable on small screens. */
+    .table-scroll { overflow-x: auto; }
+    .table-card { overflow: hidden; }
+    thead th { position: static; }
+  }
+  @media (max-width: 900px) {
+    .table-wrap { padding: 0 8px; }
+    .pos-select { min-width: 120px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="header-brand">
+      <div class="reeco-logo">reeco.</div>
+      <div class="header-divider">×</div>
+      <div>
+        <div class="header-title">GF Hotels — Interactive Pricing Proposal</div>
+        <div class="header-subtitle">Prepared June 2026 &nbsp;·&nbsp; Toggle modules per property &nbsp;·&nbsp; Pricing auto-updates below</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="summary-bar">
+  <div class="summary-bar-inner">
+    <div class="summary-stat">
+      <div class="summary-stat-label">Properties</div>
+      <div class="summary-stat-value" id="stat-props">—</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-stat">
+      <div class="summary-stat-label">Monthly Total</div>
+      <div class="summary-stat-value mint" id="stat-monthly">—</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-stat">
+      <div class="summary-stat-label">Annual ARR</div>
+      <div class="summary-stat-value mint" id="stat-arr">—</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-stat">
+      <div class="summary-stat-label">With Culinary</div>
+      <div class="summary-stat-value" id="stat-culinary">—</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-stat">
+      <div class="summary-stat-label">Setup Credit</div>
+      <div class="summary-stat-value" id="stat-setup">—</div>
+    </div>
+    <div class="summary-note" id="stat-note">Adjust toggles below to model your portfolio</div>
+  </div>
+</div>
+
+<div class="legend-bar">
+  <div class="legend-bar-inner">
+    <span class="legend-label">Pricing Tiers:</span>
+    <span class="legend-item"><span class="type-badge type-fs">FS</span> 200+ rooms <span class="legend-price mint">$520/mo</span></span>
+    <span class="legend-item"><span class="type-badge type-fs">FS</span> &lt;200 rooms <span class="legend-price mint">$390/mo</span></span>
+    <span class="legend-item"><span class="type-badge type-ls">LS</span> 100+ rooms <span class="legend-price">$325/mo</span></span>
+    <span class="legend-item"><span class="type-badge type-ls">LS</span> &lt;100 rooms <span class="legend-price">$260/mo</span></span>
+    <span class="legend-item">Inventory <span class="legend-price">FS $200 / LS $100</span></span>
+    <span class="legend-item">Culinary <span class="legend-price">$200/mo</span></span>
+    <span class="legend-item" style="color: var(--stone-600); font-size:11px;">All setup fees waived (shown as credit)</span>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <div class="table-card">
+    <div class="table-toolbar">
+      <span class="toolbar-label">Filter:</span>
+      <button class="filter-btn active" onclick="filterType('all', this)">All</button>
+      <button class="filter-btn" onclick="filterType('F', this)">Full-Service</button>
+      <button class="filter-btn" onclick="filterType('L', this)">Select-Service</button>
+      <input type="text" class="search-input" placeholder="Search properties…" oninput="filterSearch(this.value)">
+    </div>
+    <div class="table-scroll">
+    <table id="prop-table">
+      <thead>
+        <tr>
+          <th style="min-width:260px;">Property</th>
+          <th>Type</th>
+          <th class="right">Rooms</th>
+          <th class="right">AP + Purchasing</th>
+          <th style="text-align:center; min-width:90px;">Inventory</th>
+          <th style="text-align:center; min-width:90px;">Culinary</th>
+          <th style="min-width:180px;">POS System</th>
+          <th class="right">Monthly</th>
+          <th class="right">Annual</th>
+        </tr>
+      </thead>
+      <tbody id="prop-tbody">
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="foot-label" colspan="3">Portfolio Total</td>
+          <td></td><td></td><td></td><td></td>
+          <td class="foot-total" id="foot-monthly">—</td>
+          <td class="foot-annual" id="foot-annual">—</td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const POS_OPTIONS = [
+  "— Select POS —",
+  "Toast",
+  "Oracle Micros Simphony",
+  "Oracle MICROS 3700",
+  "Aloha POS by NCR",
+  "Shiji Infrasys",
+  "Square for Restaurants",
+  "Clover",
+  "Squirrel POS",
+  "Revel Systems",
+  "Agilysys InfoGenesis",
+  "Lightspeed Restaurant",
+  "POSitouch",
+  "Silverware POS",
+  "Digital Dining by Menusoft",
+  "Heartland Restaurant",
+  "SpotOn Restaurant",
+  "Simphony (Marriott-Managed)",
+  "IRIS (F&B Ordering)",
+  "Other / Custom",
+  "TBD / Unknown"
+];
+
+const PROPERTIES = [
+  // [name, type, rooms, closed]
+  ["Baymont by Wyndham Midland","L",79,false],
+  ["Bayside Inn Key Largo","L",56,false],
+  ["Cambria Hotel Milwaukee Downtown","L",132,false],
+  ["Canopy Portland Pearl District","F",153,false],
+  ["Casa de Palmas Trademark Collection by Wyndham","F",165,false],
+  ["Chicago Marriott Schaumburg","F",398,false],
+  ["Courtyard by Marriott Canton","L",150,false],
+  ["Courtyard by Marriott Greenville Spartanburg Airport","L",136,false],
+  ["Courtyard by Marriott Lubbock","L",78,false],
+  ["Courtyard by Marriott Madison West Middleton","F",136,false],
+  ["Courtyard by Marriott Orlando Lake Buena Vista at Vista Centre","F",308,false],
+  ["Courtyard by Marriott Phoenix Midtown","L",160,true],
+  ["Crowne Plaza Houston Medical Center Galleria Area","F",354,false],
+  ["Crowne Plaza Orlando Lake Buena Vista","F",200,false],
+  ["Crowne Plaza Philadelphia King of Prussia","F",225,false],
+  ["DASKK Orlando Hotel near Universal Blvd","F",154,false],
+  ["Delta Hotel Philadelphia Airport","F",348,false],
+  ["Delta Hotels Orlando Celebration","F",718,false],
+  ["Dossier Hotel Portland","F",205,false],
+  ["DoubleTree by Hilton Atlanta Perimeter Dunwoody","F",250,false],
+  ["DoubleTree by Hilton Charlotte City Center","F",296,false],
+  ["DoubleTree by Hilton Fort Worth South","F",232,false],
+  ["DoubleTree by Hilton Hotel Annapolis","F",219,false],
+  ["DoubleTree by Hilton Hotel Binghamton","F",207,false],
+  ["DoubleTree by Hilton Hotel Colorado Springs","F",299,false],
+  ["DoubleTree by Hilton Hotel Houston Intercontinental Airport","F",313,false],
+  ["DoubleTree by Hilton Hotel Orlando Airport","F",348,false],
+  ["DoubleTree by Hilton Omaha Southwest","F",179,false],
+  ["DoubleTree Hotel Grand Rapids Airport","F",226,false],
+  ["DoubleTree Washington DC North Gaithersburg","F",298,false],
+  ["Embassy Suites by Hilton Chicago Lombard Oak Brook","F",262,false],
+  ["Embassy Suites by Hilton Colorado Springs","F",205,false],
+  ["Embassy Suites by Hilton Columbus Airport","F",198,false],
+  ["Embassy Suites by Hilton Lubbock","F",156,false],
+  ["Embassy Suites by Hilton Newark Wilmington South","F",154,false],
+  ["Embassy Suites by Hilton Orlando Lake Buena Vista Resort","F",334,false],
+  ["Extended Stay America Premier Suites NAS Pensacola","F",124,false],
+  ["Fairfield by Marriott Inn & Suites Davenport","L",111,false],
+  ["Fairfield by Marriott Inn & Suites Marshall","L",83,false],
+  ["Fairfield by Marriott Inn & Suites Waco North","L",109,false],
+  ["Fairfield by Marriott Inn & Suites Waxahachie","L",78,false],
+  ["Fairfield Inn & Suites by Marriott San Antonio NE/Schertz","L",117,false],
+  ["Fairfield Inn & Suites Kingsland","L",82,false],
+  ["Fairfield Inn Charlotte Gastonia","L",89,false],
+  ["Fairfield Inn Joplin","L",62,false],
+  ["Fairfield Inn Philadelphia Valley Forge King of Prussia","L",80,false],
+  ["Fairfield Inn St Louis Collinsville","L",62,false],
+  ["Fishermen's Village","L",42,false],
+  ["Former Fairfield Inn Indianapolis South","L",60,true],
+  ["Former Hampton Inn Joplin","L",89,false],
+  ["Former Hampton Inn Marion","L",89,false],
+  ["Former Hilton Garden Inn Joplin","L",96,false],
+  ["Four Seasons Island Resort","F",55,false],
+  ["Grand Naniloa Hotel Hilo a DoubleTree by Hilton","F",381,false],
+  ["Hampton Inn & Suites Alpharetta","L",103,false],
+  ["Hampton Inn & Suites Bethlehem","L",110,false],
+  ["Hampton Inn Anderson","L",99,true],
+  ["Hampton Inn Lincoln South Heritage Park","L",76,false],
+  ["Hampton Inn Mount Vernon","L",101,true],
+  ["Heritage Hotel Golf Spa & Conference Center","F",163,false],
+  ["Heritage Place Houston Brookhollow","L",197,false],
+  ["Hilton Charlotte University Place","F",393,false],
+  ["Hilton Chicago Magnificent Mile Suites","F",345,false],
+  ["Hilton Cincinnati Netherland Plaza","F",561,false],
+  ["Hilton Garden Inn Apopka City Center","F",118,false],
+  ["Hilton Garden Inn Atlanta East Stonecrest","L",110,false],
+  ["Hilton Garden Inn Cleveland East/Mayfield Village","L",128,false],
+  ["Hilton Garden Inn Exton/West Chester","F",135,false],
+  ["Hilton Garden Inn Madison West Middleton","F",133,false],
+  ["Hilton Garden Inn Orlando North/Lake Mary","F",123,false],
+  ["Hilton Garden Inn Philadelphia Center City","F",279,false],
+  ["Hilton Garden Inn Rockford","F",135,false],
+  ["Hilton Jackson","F",276,false],
+  ["Hilton Melbourne","F",238,false],
+  ["Holiday Inn & Suites Lima","F",116,false],
+  ["Holiday Inn Express & Suites Carbondale","L",100,false],
+  ["Holiday Inn Express & Suites Dallas South-DeSoto","L",88,false],
+  ["Holiday Inn Express & Suites Wheat Ridge Denver West","L",103,false],
+  ["Holiday Inn Express Lake Wales N-Winter Haven","L",82,false],
+  ["Holiday Inn Express Nashville Hendersonville","L",93,false],
+  ["Holiday Inn Harrisburg East","F",175,false],
+  ["Holiday Inn Milwaukee Riverfront","F",160,false],
+  ["Holiday Inn Redding","F",125,false],
+  ["Home2 Suites by Hilton Huntsville","L",90,false],
+  ["Home2 Suites by Hilton St Louis Downtown","L",126,false],
+  ["Homewood Suites by Hilton Newark Wilmington South Area","L",91,false],
+  ["Hotel Eastlund, BW Premier Collection","F",168,false],
+  ["Hotel Felix","F",228,false],
+  ["Hotel Indigo Birmingham Five Points S-UAB","F",63,false],
+  ["Hotel Topeka at City Center","F",224,false],
+  ["Hyatt House Orlando International Drive","F",175,false],
+  ["Hyatt Place Asheville Airport","L",108,false],
+  ["Le Meridien Dallas by the Galleria","F",258,false],
+  ["Marriott Tacoma Downtown","F",304,false],
+  ["Microtel Inn & Suites by Wyndham Wheeling at The Highlands","L",85,false],
+  ["Okatie Hilton Head Hotel","L",64,false],
+  ["Pine Mountain Ski & Golf Resort","F",85,false],
+  ["Radisson Hotel Freehold","F",121,false],
+  ["Radisson Hotel Oakland Airport","F",289,true],
+  ["Ramada Tampa Airport Westshore","F",237,false],
+  ["Renaissance Baltimore Harborplace Hotel","F",622,false],
+  ["Residence Inn by Marriott Madison West Middleton","F",122,false],
+  ["Residence Inn by Marriott Philadelphia Glen Mills/Concordville","L",127,false],
+  ["Residence Inn Shreveport Airport","L",78,false],
+  ["Sheraton Harrisburg Hershey Hotel","F",347,false],
+  ["Sheraton Hotel Baltimore North","F",283,false],
+  ["Sheraton North Houston at George Bush Intercontinental Airport","F",419,false],
+  ["Sheraton Suites Fort Lauderdale at Cypress Creek","F",258,false],
+  ["Skyline Hotel Detroit Airport, SureStay Collection","F",271,false],
+  ["Spark by Hilton Clifton","L",116,false],
+  ["SpringHill Suites Baltimore Downtown Inner Harbor","L",99,false],
+  ["SpringHill Suites by Marriott Eau Claire","L",100,false],
+  ["SpringHill Suites by Marriott Philadelphia West Chester/Exton","L",123,false],
+  ["Staybridge Suites Lubbock","L",82,false],
+  ["Staybridge Suites Orlando Royale Parc Suites","L",224,false],
+  ["Staybridge Suites Pensacola Airport","L",107,false],
+  ["Staybridge Suites Tallahassee I-10 East","L",104,false],
+  ["The Industrialist Hotel Brooklyn","L",76,false],
+  ["The Iron Horse Hotel","F",100,false],
+  ["The Lexi Las Vegas","F",64,false],
+  ["The Lismore a DoubleTree by Hilton Eau Claire","F",112,false],
+  ["The Mecklen Hotel, a Tribute Portfolio Hotel","F",174,false],
+  ["The Nucleus","R",0,false],
+  ["The Oxbow Hotel Eau Claire","F",30,false],
+  ["The Winfield Lofts by Wyndham","L",125,false],
+  ["The Yorktowne Hotel, Tapestry Collection by Hilton","F",120,false],
+  ["TownePlace Suites Dallas Las Colinas","L",135,false],
+  ["Tru by Hilton Cypress Houston","L",92,false],
+  ["Tru by Hilton St Louis Downtown","L",75,false],
+  ["Tryp by Wyndham Pittsburgh Lawrenceville","F",108,false],
+  ["Wingate St Clairsville Wheeling","L",116,false],
+  ["Wyndham Atlanta Buckhead Hotel & Conference Center","F",352,false],
+  ["Wyndham Atlanta Perimeter","F",224,false]
+];
+
+function getBasePrice(type, rooms) {
+  if (type === 'F') return rooms >= 200 ? 520 : 390;
+  if (type === 'L') return rooms >= 100 ? 325 : 260;
+  return 0;
+}
+
+function getInvPrice(type) {
+  return type === 'F' ? 200 : 100;
+}
+
+function fmt(n) {
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function fmtAnn(n) {
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}) + ' / yr';
+}
+
+let activeFilter = 'all';
+let searchTerm = '';
+
+function buildTable() {
+  const tbody = document.getElementById('prop-tbody');
+  tbody.innerHTML = '';
+
+  PROPERTIES.forEach((p, i) => {
+    const [name, type, rooms, closed] = p;
+    const isRestaurant = type === 'R';
+    const basePrice = getBasePrice(type, rooms);
+    const invPrice = getInvPrice(type);
+    const defaultInv = type === 'F';
+    const defaultCul = type === 'F';
+
+    const tr = document.createElement('tr');
+    tr.dataset.idx = i;
+    tr.dataset.type = type;
+    tr.dataset.name = name.toLowerCase();
+    if (closed) tr.classList.add('excluded');
+    if (isRestaurant) tr.classList.add('restaurant');
+
+    const posOptions = POS_OPTIONS.map(o =>
+      `<option value="${o}">${o}</option>`
+    ).join('');
+
+    tr.innerHTML = `
+      <td class="prop-name">${name}</td>
+      <td><span class="type-badge type-${type === 'F' ? 'fs' : (type === 'L' ? 'ls' : 'ls')}">${type === 'R' ? 'R' : type === 'F' ? 'FS' : 'LS'}</span></td>
+      <td class="rooms-val">${rooms > 0 ? rooms.toLocaleString() : '—'}</td>
+      <td class="base-price" data-base="${basePrice}">${basePrice > 0 ? fmt(basePrice) : '—'}</td>
+      <td class="toggle-cell">
+        ${!isRestaurant && !closed ? `
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" ${defaultInv ? 'checked' : ''} onchange="onToggle(${i})" class="inv-check">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span class="toggle-price ${defaultInv ? 'active' : ''}" data-inv-label="${invPrice}">${defaultInv ? fmt(invPrice) : '—'}</span>
+        </div>` : '<span style="color:var(--stone-200);">—</span>'}
+      </td>
+      <td class="toggle-cell">
+        ${!isRestaurant && !closed ? `
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" ${defaultCul ? 'checked' : ''} onchange="onToggle(${i})" class="cul-check">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span class="toggle-price ${defaultCul ? 'active' : ''}">$200</span>
+        </div>` : '<span style="color:var(--stone-200);">—</span>'}
+      </td>
+      <td>
+        ${!isRestaurant && !closed ? `
+        <select class="pos-select ${defaultCul ? '' : 'pos-hidden'}" onchange="void 0" id="pos-${i}">
+          ${posOptions}
+        </select>` : ''}
+      </td>
+      <td class="row-total" id="total-${i}">${!isRestaurant && !closed ? fmt(calcRow(type, rooms, defaultInv, defaultCul)) : '—'}</td>
+      <td class="row-annual" id="ann-${i}">${!isRestaurant && !closed ? fmtAnn(calcRow(type, rooms, defaultInv, defaultCul) * 12) : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateTotals();
+  applyFilter();
+}
+
+function calcRow(type, rooms, hasInv, hasCul) {
+  let total = getBasePrice(type, rooms);
+  if (hasInv) total += getInvPrice(type);
+  if (hasCul) total += 200;
+  return total;
+}
+
+function onToggle(idx) {
+  const tr = document.querySelector(`tr[data-idx="${idx}"]`);
+  const invCheck = tr.querySelector('.inv-check');
+  const culCheck = tr.querySelector('.cul-check');
+  const posSelect = document.getElementById(`pos-${idx}`);
+  const invLabel = tr.querySelector('[data-inv-label]');
+  const culLabel = tr.querySelectorAll('.toggle-price')[1];
+
+  const type = PROPERTIES[idx][1];
+  const rooms = PROPERTIES[idx][2];
+
+  const hasInv = invCheck && invCheck.checked;
+  const hasCul = culCheck && culCheck.checked;
+
+  // Update inventory price label
+  if (invLabel) {
+    invLabel.textContent = hasInv ? fmt(getInvPrice(type)) : '—';
+    invLabel.classList.toggle('active', hasInv);
+  }
+  // Update culinary price label
+  if (culLabel) {
+    culLabel.textContent = hasCul ? '$200' : '—';
+    culLabel.classList.toggle('active', hasCul);
+  }
+  // Show/hide POS select
+  if (posSelect) posSelect.classList.toggle('pos-hidden', !hasCul);
+
+  // Update row total
+  const total = calcRow(type, rooms, hasInv, hasCul);
+  document.getElementById(`total-${idx}`).textContent = fmt(total);
+  document.getElementById(`ann-${idx}`).textContent = fmtAnn(total * 12);
+
+  updateTotals();
+}
+
+function updateTotals() {
+  let monthly = 0;
+  let culinaryProps = 0;
+  let setupCredit = 0;
+  let activeProps = 0;
+
+  PROPERTIES.forEach((p, i) => {
+    const [name, type, rooms, closed] = p;
+    if (closed || type === 'R' || rooms === 0) return;
+
+    const tr = document.querySelector(`tr[data-idx="${i}"]`);
+    if (!tr) return;
+
+    const invCheck = tr.querySelector('.inv-check');
+    const culCheck = tr.querySelector('.cul-check');
+    const hasInv = invCheck ? invCheck.checked : false;
+    const hasCul = culCheck ? culCheck.checked : false;
+
+    monthly += calcRow(type, rooms, hasInv, hasCul);
+    if (hasCul) culinaryProps++;
+    setupCredit += type === 'F' ? 1000 : 500;
+    activeProps++;
+  });
+
+  const arr = monthly * 12;
+  document.getElementById('stat-props').textContent = activeProps;
+  document.getElementById('stat-monthly').textContent = fmt(monthly);
+  document.getElementById('stat-arr').textContent = '$' + (arr / 1000).toFixed(0) + 'K';
+  document.getElementById('stat-culinary').textContent = culinaryProps + ' Properties';
+  document.getElementById('stat-setup').textContent = fmt(setupCredit) + ' Waived';
+
+  document.getElementById('foot-monthly').textContent = fmt(monthly) + ' / mo';
+  document.getElementById('foot-annual').textContent = fmtAnn(arr);
+}
+
+function filterType(type, btn) {
+  activeFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function filterSearch(val) {
+  searchTerm = val.toLowerCase();
+  applyFilter();
+}
+
+function applyFilter() {
+  document.querySelectorAll('#prop-tbody tr').forEach(tr => {
+    const type = tr.dataset.type;
+    const name = tr.dataset.name || '';
+    let show = true;
+    if (activeFilter !== 'all' && type !== activeFilter) show = false;
+    if (searchTerm && !name.includes(searchTerm)) show = false;
+    tr.style.display = show ? '' : 'none';
+  });
+}
+
+buildTable();
+</script>
+</body>
+</html>
